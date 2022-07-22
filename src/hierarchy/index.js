@@ -1,3 +1,5 @@
+import * as d3 from "d3";
+
 // Source: https://observablehq.com/@d3/force-directed-tree
 const data = {
  "name": "flare",
