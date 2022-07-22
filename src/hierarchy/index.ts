@@ -4,8 +4,8 @@ import data from "./data.json";
 
 // Source: https://observablehq.com/@d3/force-directed-tree
 
-const width = 600;
-const height = 600;
+const width = 900;
+const height = 900;
 
 type Datum = { name: string; value?: number; children?: Datum[] };
 type Node = HierarchyNode<Datum> & SimulationNodeDatum;
