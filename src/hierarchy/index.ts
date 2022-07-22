@@ -1,4 +1,5 @@
 import * as d3 from "d3";
+import { HierarchyLink, HierarchyNode, SimulationLinkDatum, SimulationNodeDatum } from "d3";
 
 // Source: https://observablehq.com/@d3/force-directed-tree
 const data = {
@@ -385,12 +386,16 @@ const data = {
 const width = 600;
 const height = 600;
 
-const root = d3.hierarchy(data);
-const links = root.links();
+type Datum = { name: string; value?: number; children?: Datum[] };
+type Node = HierarchyNode<Datum> & SimulationNodeDatum;
+type Link = HierarchyLink<Datum> & SimulationLinkDatum<Node>;
+
+const root = d3.hierarchy(data) as Node;
+const links = root.links() as Link[];
 const nodes = root.descendants();
 
 const simulation = d3.forceSimulation(nodes)
-    .force("link", d3.forceLink(links).id(d => d.id).distance(0).strength(1))
+    .force("link", d3.forceLink<Node, Link>(links).id(d => d.id || '').distance(0).strength(1))
     .force("charge", d3.forceManyBody().strength(-50))
     .force("x", d3.forceX())
     .force("y", d3.forceY());
@@ -421,15 +426,17 @@ node.append("title")
 
 simulation.on("tick", () => {
   link
-      .attr("x1", d => d.source.x)
-      .attr("y1", d => d.source.y)
-      .attr("x2", d => d.target.x)
-      .attr("y2", d => d.target.y);
+      .attr("x1", d => (d.source as Node).x || null)
+      .attr("y1", d => (d.source as Node).y || null)
+      .attr("x2", d => (d.target as Node).x || null)
+      .attr("y2", d => (d.target as Node).y || null);
 
   node
-      .attr("cx", d => d.x)
-      .attr("cy", d => d.y);
+      .attr("cx", d => d.x || null)
+      .attr("cy", d => d.y || null);
 });
 
 const chart = svg.node();
-document.querySelector("main").appendChild(chart);
+if (chart) {
+  document.querySelector("main")?.appendChild(chart);
+}
