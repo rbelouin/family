@@ -1,0 +1,11 @@
+{
+  "apps": [
+    {
+      "app_id": "app_13309811-2bd7-42c3-82a8-1c6349e18bfb",
+      "org_id": "user_6958aa92-9728-4364-8217-a775e7a43eee",
+      "deploy_url": "https://github.com/rbelouin/family.git",
+      "name": "family",
+      "alias": "family"
+    }
+  ]
+}
