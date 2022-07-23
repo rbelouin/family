@@ -5,9 +5,11 @@
   "author": "Rodolphe Belouin <rodolphe.belouin@gmail.com>",
   "license": "MIT",
   "scripts": {
+    "build": "parcel build src/index.html",
     "dev": "parcel src/index.html",
     "prepare": "husky install",
     "storybook": "start-storybook -p 6006",
+    "storybook:build": "NODE_OPTIONS=--openssl-legacy-provider build-storybook",
     "ts:check": "tsc --noEmit"
   },
   "dependencies": {
