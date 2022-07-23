@@ -12,6 +12,8 @@ export type HierarchyProps = {
   height: number;
   // Distance between each node of the hierarchy
   distance: number;
+  // Whether to simulate forces between the nodes (true by default)
+  forcesEnabled?: boolean;
 };
 
 type Datum = { name: string; value?: number; children?: Datum[] };
@@ -22,6 +24,7 @@ export const Hierarchy: D3Component<HierarchyProps> = ({
   width,
   height,
   distance,
+  forcesEnabled = true,
 }) => {
   const root = d3.hierarchy(data) as Node;
   organizeNodes(root, distance);
@@ -29,22 +32,10 @@ export const Hierarchy: D3Component<HierarchyProps> = ({
   const links = root.links() as Link[];
   const nodes = root.descendants();
 
-  const simulation = d3
-    .forceSimulation(nodes)
-    .force(
-      "link",
-      d3
-        .forceLink<Node, Link>(links)
-        .id((d) => d.id || "")
-        .distance(0)
-        .strength(1)
-    )
-    .force("charge", d3.forceManyBody().strength(-50))
-    .force("x", d3.forceX())
-    .force("y", d3.forceY());
-
   const svg = d3
     .create("svg")
+    .attr("width", width)
+    .attr("height", height)
     .attr("viewBox", [-width / 2, -height / 2, width, height]);
 
   const link = svg
@@ -70,10 +61,30 @@ export const Hierarchy: D3Component<HierarchyProps> = ({
   node.append("title").text((d) => d.data.name);
 
   updateCoordinates(node, link);
-  simulation.on("tick", () => updateCoordinates(node, link));
+  if (forcesEnabled) {
+    applyForces(nodes, links, () => updateCoordinates(node, link));
+  }
 
   return svg.node();
 };
+
+function applyForces(nodes: Node[], links: Link[], onTick: () => void) {
+  const simulation = d3
+    .forceSimulation(nodes)
+    .force(
+      "link",
+      d3
+        .forceLink<Node, Link>(links)
+        .id((d) => d.id || "")
+        .distance(0)
+        .strength(1)
+    )
+    .force("charge", d3.forceManyBody().strength(-50))
+    .force("x", d3.forceX())
+    .force("y", d3.forceY());
+
+  simulation.on("tick", onTick);
+}
 
 function updateCoordinates(
   node: d3.Selection<
