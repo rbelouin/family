@@ -8,7 +8,7 @@
   "scripts": {
     "build": "parcel build src/index.html",
     "dev": "parcel src/index.html",
-    "prepare": "husky install",
+    "prepare": "husky install && yarn build",
     "start": "node src/server/index.cjs",
     "storybook": "start-storybook -p 6006",
     "storybook:build": "NODE_OPTIONS=--openssl-legacy-provider build-storybook",
