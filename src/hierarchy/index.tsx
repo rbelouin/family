@@ -1,10 +1,10 @@
 import * as d3 from "d3";
 import { D3Component } from "../types";
-import data from "./data.json";
 
 // This component is extensively inspired by the following d3 example:
 // https://observablehq.com/@d3/force-directed-tree
 
+export type Data = { name: string; value?: number; children?: Data[] };
 export type HierarchyProps = {
   // Width of the generated SVG element’s viewport
   width: number;
@@ -14,20 +14,28 @@ export type HierarchyProps = {
   distance: number;
   // Whether to simulate forces between the nodes (true by default)
   forcesEnabled?: boolean;
+  // Whether to rearrange the nodes in a circle
+  circularArrangement?: boolean;
+  // Families and members, organized as a hierarchy of nodes
+  data: Data;
 };
 
-type Datum = { name: string; value?: number; children?: Datum[] };
-type Node = d3.HierarchyNode<Datum> & d3.SimulationNodeDatum;
-type Link = d3.HierarchyLink<Datum> & d3.SimulationLinkDatum<Node>;
+type Node = d3.HierarchyNode<Data> & d3.SimulationNodeDatum;
+type Link = d3.HierarchyLink<Data> & d3.SimulationLinkDatum<Node>;
 
 export const Hierarchy: D3Component<HierarchyProps> = ({
   width,
   height,
   distance,
   forcesEnabled = true,
+  circularArrangement = false,
+  data,
 }) => {
   const root = d3.hierarchy(data) as Node;
-  organizeNodes(root, distance);
+
+  if (circularArrangement) {
+    arrangeNodesOnACircle(root, distance);
+  }
 
   const links = root.links() as Link[];
   const nodes = root.descendants();
@@ -104,10 +112,14 @@ function updateCoordinates(
     .attr("y2", (d) => (d.target as Node).y || null);
 }
 
-function organizeNodes(root: Node, distance: number) {
+function arrangeNodesOnACircle(root: Node, distance: number) {
+  // First of all, we give nodes a weight based on their number of children
+  // so that we can use this value to divide the "radial space".
   root.sum(() => 1);
 
-  function organizeNode(node: Node, layer: number, range: [number, number]) {
+  function arrangeNode(node: Node, layer: number, range: [number, number]) {
+    // A node will position itself on the bisector of the angle it is being allocated,
+    // and a distance from the center that is proportional to its depth in the hierarchy.
     const [x, y] = d3.pointRadial((range[0] + range[1]) / 2, distance * layer);
     node.x = x;
     node.y = y;
@@ -116,19 +128,27 @@ function organizeNodes(root: Node, distance: number) {
 
     const sectionAngle = range[1] - range[0];
     let angleStart = range[0];
+
+    // Then it divides the angle into N sections, where N is the number of direct children,
+    // and keeps each section proportional to the weight of the direct children.
     children.forEach((child) => {
       const ratio =
         node.value && child.value
           ? child.value / node.value
           : 1 / children.length;
+
       const angleEnd = angleStart + ratio * sectionAngle;
-      organizeNode(child, layer + 1, [angleStart, angleEnd]);
+
+      // And it does that recursively until there are no more children
+      // So be mindful about the data you give to the component, as it will overflow
+      // the call stack if your hierarchy somehow has circular dependencies.
+      arrangeNode(child, layer + 1, [angleStart, angleEnd]);
 
       angleStart = angleEnd;
     });
   }
 
-  organizeNode(root, 0, [0, 2 * Math.PI]);
+  arrangeNode(root, 0, [0, 2 * Math.PI]);
 }
 
 export default Hierarchy;
