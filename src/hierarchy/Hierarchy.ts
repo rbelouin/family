@@ -1,17 +1,40 @@
 import * as d3 from "d3";
 import { D3Component } from "../types";
+import { FamilyNode } from "./FamilyNode";
+import { MemberNode } from "./MemberNode";
 
 // This component is extensively inspired by the following d3 example:
 // https://observablehq.com/@d3/force-directed-tree
 
-export type Data = { name: string; value?: number; children?: Data[] };
+export type Data =
+  | {
+      type: "family";
+      value?: number;
+      children?: Data[];
+    }
+  | {
+      type: "member";
+      name: string;
+      picture?: string;
+      value?: number;
+      children?: Data[];
+    };
+
 export type HierarchyProps = {
-  // Width of the generated SVG element’s viewport
+  // Width of the generated SVG element�s viewport
   width: number;
-  // Height of the generated SVG element’s viewport
+  // Height of the generated SVG element�s viewport
   height: number;
   // Distance between each node of the hierarchy
   distance: number;
+  // Color used for the links and borders
+  color?: string;
+  // Color used for instance when pictures are missing on member nodes
+  backgroundColor?: string;
+  // Size (both width and length) used to render the family nodes
+  familyNodeSize?: number;
+  // Size (both width and length) used to render the member nodes
+  memberNodeSize?: number;
   // Whether to simulate forces between the nodes (true by default)
   forcesEnabled?: boolean;
   // Whether to rearrange the nodes in a circle
@@ -23,14 +46,22 @@ export type HierarchyProps = {
 type Node = d3.HierarchyNode<Data> & d3.SimulationNodeDatum;
 type Link = d3.HierarchyLink<Data> & d3.SimulationLinkDatum<Node>;
 
-export const Hierarchy: D3Component<HierarchyProps> = ({
-  width,
-  height,
-  distance,
-  forcesEnabled = true,
-  circularArrangement = false,
-  data,
-}) => {
+export const Hierarchy: D3Component<HierarchyProps, SVGSVGElement> = (
+  props
+) => {
+  const {
+    width,
+    height,
+    distance,
+    color = "#CC0",
+    backgroundColor = "#FFF",
+    familyNodeSize = 7,
+    memberNodeSize = 20,
+    forcesEnabled = true,
+    circularArrangement = false,
+    data,
+  } = props;
+
   const root = d3.hierarchy(data) as Node;
 
   if (circularArrangement) {
@@ -42,41 +73,49 @@ export const Hierarchy: D3Component<HierarchyProps> = ({
 
   const svg = d3
     .create("svg")
-    .attr("width", width)
-    .attr("height", height)
+    .datum(props)
     .attr("viewBox", [-width / 2, -height / 2, width, height]);
 
   const link = svg
     .append("g")
-    .attr("stroke", "#999")
-    .attr("stroke-opacity", 0.6)
+    .attr("stroke", color)
     .selectAll("line")
     .data(links)
     .join("line");
 
   const node = svg
     .append("g")
-    .attr("fill", "#fff")
-    .attr("stroke", "#000")
-    .attr("stroke-width", 1.5)
-    .selectAll("circle")
+    .selectAll(".node")
     .data(nodes)
-    .join("circle")
-    .attr("fill", (d) => (d.children ? null : "#000"))
-    .attr("stroke", (d) => (d.children ? null : "#fff"))
-    .attr("r", 3.5);
+    .join("g")
+    .classed("node", true)
+    .append((node) =>
+      node.data.type === "family"
+        ? FamilyNode({ ...node.data, color, size: familyNodeSize }).node()!
+        : MemberNode({
+            ...node.data,
+            color,
+            backgroundColor,
+            size: memberNodeSize,
+          }).node()!
+    );
 
-  node.append("title").text((d) => d.data.name);
-
-  updateCoordinates(node, link);
+  updateCoordinates(node, link, familyNodeSize, memberNodeSize);
   if (forcesEnabled) {
-    applyForces(nodes, links, () => updateCoordinates(node, link));
+    applyForces(nodes, links, memberNodeSize, () =>
+      updateCoordinates(node, link, familyNodeSize, memberNodeSize)
+    );
   }
 
-  return svg.node();
+  return svg;
 };
 
-function applyForces(nodes: Node[], links: Link[], onTick: () => void) {
+function applyForces(
+  nodes: Node[],
+  links: Link[],
+  distance: number,
+  onTick: () => void
+) {
   const simulation = d3
     .forceSimulation(nodes)
     .force(
@@ -84,10 +123,10 @@ function applyForces(nodes: Node[], links: Link[], onTick: () => void) {
       d3
         .forceLink<Node, Link>(links)
         .id((d) => d.id || "")
-        .distance(0)
+        .distance(distance)
         .strength(1)
     )
-    .force("charge", d3.forceManyBody().strength(-50))
+    .force("charge", d3.forceManyBody().strength(-100))
     .force("x", d3.forceX())
     .force("y", d3.forceY());
 
@@ -95,15 +134,21 @@ function applyForces(nodes: Node[], links: Link[], onTick: () => void) {
 }
 
 function updateCoordinates(
-  node: d3.Selection<
-    d3.BaseType | SVGCircleElement,
-    Node,
+  node: d3.Selection<SVGGElement, Node, SVGGElement, HierarchyProps>,
+  link: d3.Selection<
+    d3.BaseType | SVGLineElement,
+    Link,
     SVGGElement,
-    undefined
+    HierarchyProps
   >,
-  link: d3.Selection<d3.BaseType | SVGLineElement, Link, SVGGElement, undefined>
+  familyNodeSize: number,
+  memberNodeSize: number
 ) {
-  node.attr("cx", (d) => d.x || null).attr("cy", (d) => d.y || null);
+  node.attr("transform", (d) =>
+    d.data.type === "family"
+      ? `translate(${d.x! - familyNodeSize / 2}, ${d.y! - familyNodeSize / 2})`
+      : `translate(${d.x! - memberNodeSize / 2}, ${d.y! - memberNodeSize / 2})`
+  );
 
   link
     .attr("x1", (d) => (d.source as Node).x || null)
