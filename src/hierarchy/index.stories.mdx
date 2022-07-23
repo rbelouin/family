@@ -1,0 +1,121 @@
+import { Canvas, Meta, Story } from "@storybook/addon-docs";
+import { D3Component } from "../types";
+import { toReact } from "../lib/d3-to-react";
+import complexFamilyTree from "../config/family-tree.json";
+
+import { Hierarchy } from "./index";
+
+export const ReactHierarchy = toReact(Hierarchy);
+
+<Meta title="Hierarchy" component={ReactHierarchy} />
+
+# Simple Hierarchy
+
+This component started as a pure duplicate of the [Force-Directed Tree](https://observablehq.com/@d3/force-directed-tree) d3 example, and you can still use the component as such, even though the "drag" functionality has been dropped.
+
+export const simpleFamilyTree = {
+  name: "Bluey’s family",
+  type: "family",
+  children: [{
+    name: "Bandit",
+    type: "member",
+    children: [{
+      name: "Bandit’s family",
+      type: "family",
+      children: [{
+        name: "Bob",
+        type: "member",
+        children: [],
+      }, {
+        name: "Nana",
+        type: "member",
+        children: [],
+      }, {
+        name: "Stripe",
+        type: "member",
+        children: [{
+          name: "Stripe’s family",
+          type: "family",
+          children: [{
+            name: "Trixie",
+            type: "member",
+          }, {
+            name: "Muffin",
+            type: "member",
+          }, {
+            name: "Socks",
+            type: "member",
+          }],
+        }],
+      }],
+    }],
+  }, {
+    name: "Chilli",
+    type: "member",
+    children: [],
+  }, {
+    name: "Bluey",
+    type: "member",
+    children: [],
+  }, {
+    name: "Bingo",
+    type: "member",
+    children: [],
+  }],
+};
+
+<Canvas>
+  <Story name="Simple Hierarchy" parameters={{ layout: "centered" }}>
+    <ReactHierarchy
+      width={200}
+      height={80}
+      distance={30}
+      data={simpleFamilyTree}
+    />
+  </Story>
+</Canvas>
+
+# Circular Hierarchy
+
+While the example above works well for simple hierarchy, it turns out that links start to overlap and that the hierarchy becomes less readable as the number of families and members grows:
+
+<Canvas>
+  <Story name="Complex Hierarchy" parameters={{ layout: "centered" }}>
+    <ReactHierarchy
+      width={1000}
+      height={800}
+      distance={30}
+      data={complexFamilyTree}
+    />
+  </Story>
+</Canvas>
+
+To address this issue, you can enable `circularArrangement`. It will position the different nodes on a circle to minimize the risk of overlaps. Here is what it looks like when `forcesEnabled` is set to `false`:
+
+<Canvas>
+  <Story name="Complex Hierarchy with Circular Arrangement" parameters={{ layout: "centered" }}>
+    <ReactHierarchy
+      width={1000}
+      height={800}
+      distance={30}
+      circularArrangement={true}
+      forcesEnabled={false}
+      data={complexFamilyTree}
+    />
+  </Story>
+</Canvas>
+
+And when turning `forcesEnabled` on again:
+
+<Canvas>
+  <Story name="Complex Hierarchy with Circular Arrangement and Forces Enabled" parameters={{ layout: "centered" }}>
+    <ReactHierarchy
+      width={1000}
+      height={800}
+      distance={30}
+      circularArrangement={true}
+      data={complexFamilyTree}
+    />
+  </Story>
+</Canvas>
+
