@@ -1,6 +1,5 @@
-import * as d3 from "d3";
-import { D3Component } from "../types";
-import { prepareCircleClipPath } from "./CircleClipPath";
+import { D3Component } from "../d3-component";
+import { createOrUpdateCircleClipPath } from "./CircleClipPath";
 
 export type MemberNodeProps = {
   type: "member";
@@ -11,45 +10,52 @@ export type MemberNodeProps = {
   picture?: string;
 };
 
-export const MemberNode: D3Component<MemberNodeProps, SVGGElement> = (
-  props
+export const MemberNode: D3Component<SVGGElement, MemberNodeProps> = (
+  selection
 ) => {
-  const { color, backgroundColor, size, name, picture } = props;
+  const props = selection.datum();
 
-  prepareCircleClipPath({ size });
+  createOrUpdateCircleClipPath(props);
 
-  const group = d3
-    .create("svg:g" as "g")
-    .datum(props)
-    .attr("clip-path", "url(#cut-circle)");
+  selection.attr("clip-path", "url(#cut-circle)");
 
-  group
-    .append("circle")
-    .attr("r", size / 2)
-    .attr("cx", size / 2)
-    .attr("cy", size / 2)
-    .attr("fill", backgroundColor)
+  selection
+    .selectAll("circle.member-node-background")
+    .data([props])
+    .join("circle")
+    .classed("member-node-background", true)
+    .attr("r", (props) => props.size / 2)
+    .attr("cx", (props) => props.size / 2)
+    .attr("cy", (props) => props.size / 2)
+    .attr("fill", (props) => props.backgroundColor)
     .attr("shape-rendering", "geometricPrecision");
 
-  if (picture) {
-    group
-      .append("image")
-      .attr("href", picture)
-      .attr("height", size)
-      .attr("width", size);
-  }
+  selection
+    .selectAll("image")
+    .data(props.picture ? [props] : [])
+    .join("image")
+    .attr("role", "image")
+    .attr("href", (props) => props.picture!)
+    .attr("height", (props) => props.size)
+    .attr("width", (props) => props.size);
 
-  group
-    .append("circle")
-    .attr("r", size / 2)
-    .attr("cx", size / 2)
-    .attr("cy", size / 2)
+  selection
+    .selectAll("circle.member-node-border")
+    .data([props])
+    .join("circle")
+    .attr("r", (props) => props.size / 2)
+    .attr("cx", (props) => props.size / 2)
+    .attr("cy", (props) => props.size / 2)
     .attr("fill", "transparent")
     .attr("stroke-width", 1.5)
-    .attr("stroke", color)
+    .attr("stroke", (props) => props.color)
     .attr("shape-rendering", "geometricPrecision");
 
-  group.append("title").text(name);
+  selection
+    .selectAll("title")
+    .data([props])
+    .join("title")
+    .text((props) => props.name);
 
-  return group;
+  return selection;
 };

@@ -1,16 +1,12 @@
-import * as d3 from "d3";
-import { D3Component } from "../types";
+import { D3Component } from "../d3-component";
 
 export type FamilyNodeProps = { type: "family"; color: string; size: number };
-export const FamilyNode: D3Component<FamilyNodeProps, SVGCircleElement> = (
-  props
+export const FamilyNode: D3Component<SVGCircleElement, FamilyNodeProps> = (
+  selection
 ) => {
-  const { color, size } = props;
-  return d3
-    .create("svg:circle" as "circle")
-    .datum(props)
-    .attr("fill", color)
-    .attr("r", size / 2)
-    .attr("cx", size / 2)
-    .attr("cy", size / 2);
+  return selection
+    .attr("fill", (props) => props.color)
+    .attr("r", (props) => props.size / 2)
+    .attr("cx", (props) => props.size / 2)
+    .attr("cy", (props) => props.size / 2);
 };

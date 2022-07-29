@@ -13,9 +13,17 @@ export function toReact<E extends keyof ElementTagNameMap, P extends {}>(
     useEffect(() => {
       if (ref.current) {
         if (element !== undefined) {
-          const selection = d3.select(element).datum(props);
-          const node = component(selection).node()!;
-          ref.current.appendChild(node);
+          const selection = d3.select(element).datum(props) as d3.Selection<
+            ElementTagNameMap[E] | d3.BaseType,
+            P,
+            null,
+            undefined
+          >;
+
+          const node = component(selection).node();
+          if (node instanceof Element) {
+            ref.current.appendChild(node);
+          }
         } else {
           setElement(d3.create(tagName).node()!);
         }

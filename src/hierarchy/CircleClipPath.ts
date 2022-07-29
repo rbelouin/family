@@ -1,34 +1,34 @@
 import * as d3 from "d3";
-import { D3Component } from "../types";
+import { D3Component } from "../d3-component";
 
 export type CircleClipPathProps = { size: number };
-export const CircleClipPath: D3Component<CircleClipPathProps, SVGSVGElement> = (
-  props
+export const CircleClipPath: D3Component<SVGSVGElement, CircleClipPathProps> = (
+  selection
 ) => {
-  const { size } = props;
-  const clipPath = d3.create("svg").datum(props);
+  const props = selection.datum();
 
-  clipPath
-    .append("defs")
+  selection
+    .selectAll("defs")
+    .data([props])
+    .join("defs")
     .append("clipPath")
     .attr("id", "cut-circle")
     .append("circle")
     .attr("shape-rendering", "geometricPrecision")
-    .attr("r", size / 2)
-    .attr("cx", size / 2)
-    .attr("cy", size / 2);
+    .attr("r", (props) => props.size / 2)
+    .attr("cx", (props) => props.size / 2)
+    .attr("cy", (props) => props.size / 2);
 
-  return clipPath;
+  return selection;
 };
 
-export const prepareCircleClipPath = (() => {
-  let clipPath: SVGSVGElement | undefined;
+export const createOrUpdateCircleClipPath = (() => {
   return (props: CircleClipPathProps) => {
-    if (!clipPath) {
-      clipPath = CircleClipPath(props).node() || undefined;
-      if (clipPath) {
-        document.body.appendChild(clipPath);
-      }
-    }
+    d3.select("body")
+      .selectAll("svg.circle-clip-path")
+      .data([props])
+      .join("svg")
+      .classed("circle-clip-path", true)
+      .call(CircleClipPath);
   };
 })();
