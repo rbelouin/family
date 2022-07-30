@@ -1,86 +1,68 @@
 import { Canvas, Meta, Story } from "@storybook/addon-docs";
-import { D3Component } from "../types";
-import { toReact } from "../lib/d3-to-react";
-import complexFamilyTree from "../config/family-tree.json";
+import { toReact } from "../d3-component/toReact";
+import { simpleFamilyTree, complexFamilyTree, geometricalTree } from "./test-data";
 
 import { Hierarchy } from "./index";
 
-export const ReactHierarchy = toReact(Hierarchy);
+export const ReactHierarchy = toReact(Hierarchy, "svg");
+export const argTypes = {
+  circularArrangement: {
+    control: { type: "boolean" },
+  },
+  forcesEnabled: {
+    control: { type: "boolean" },
+  },
+  hierarchyType: {
+    options: ["simple", "complex", "geometrical", "custom"],
+    control: { type: "select" },
+  },
+  hierarchyBreadth: {
+    control: { type: "number" },
+    if: { arg: "hierarchyType", eq: "geometrical" },
+  },
+  hierarchyDepth: {
+    control: { type: "number" },
+    if: { arg: "hierarchyType", eq: "geometrical" },
+  },
+  data: {
+    control: { type: "object" },
+    if: { arg: "hierarchyType", eq: "custom" },
+  },
+};
 
-<Meta title="Hierarchy" component={ReactHierarchy} />
+<Meta title="Hierarchy" component={ReactHierarchy} argTypes={argTypes} />
+
+export const Template = (args) => {
+  switch (args.hierarchyType) {
+    case "simple":
+      args.data = simpleFamilyTree;
+      break;
+    case "complex":
+      args.data = complexFamilyTree;
+      break;
+    case "geometrical":
+      args.data = geometricalTree(args.hierarchyBreadth || 2, args.hierarchyDepth || 4);
+      break;
+    case "custom":
+      args.data = args.data || {};
+      break;
+  }
+  return (<ReactHierarchy {...args} />);
+};
 
 # Simple Hierarchy
 
 This component started as a pure duplicate of the [Force-Directed Tree](https://observablehq.com/@d3/force-directed-tree) d3 example, and you can still use the component as such, even though the "drag" functionality has been dropped.
 
-export const simpleFamilyTree = {
-  type: "family",
-  children: [{
-    type: "member",
-    name: "Bandit",
-    picture: "https://www.bluey.tv/wp-content/uploads/2019/04/char-bandit@2x.png",
-    children: [{
-      type: "family",
-      children: [{
-        type: "member",
-        name: "Bob",
-        picture: "https://www.bluey.tv/wp-content/uploads/2019/07/Grandad.png",
-        children: [],
-      }, {
-        type: "member",
-        name: "Nana",
-        picture: "https://www.bluey.tv/wp-content/uploads/2019/07/Nana.png",
-        children: [],
-      }, {
-        type: "member",
-        name: "Stripe",
-        picture: "https://www.bluey.tv/wp-content/uploads/2019/07/Uncle-Stripe.png",
-        children: [{
-          name: "Stripe’s family",
-          type: "family",
-          children: [{
-            type: "member",
-            name: "Trixie",
-            picture: "https://www.bluey.tv/wp-content/uploads/2019/07/aunt-trixie.png",
-          }, {
-            type: "member",
-            name: "Muffin",
-            picture: "https://www.bluey.tv/wp-content/uploads/2019/07/Muffin-testshadow.png",
-          }, {
-            type: "member",
-            name: "Socks",
-            picture: "https://www.bluey.tv/wp-content/uploads/2019/07/Socks.png",
-          }],
-        }],
-      }],
-    }],
-  }, {
-    type: "member",
-    name: "Chilli",
-    picture: "https://www.bluey.tv/wp-content/uploads/2019/04/char-chilli@2x.png",
-    children: [],
-  }, {
-    type: "member",
-    name: "Bluey",
-    picture: "https://www.bluey.tv/wp-content/uploads/2019/04/char-bluey@2x.png",
-    children: [],
-  }, {
-    type: "member",
-    name: "Bingo",
-    picture: "https://www.bluey.tv/wp-content/uploads/2019/05/Bingo_dance-2x.png",
-    children: [],
-  }],
-};
-
 <Canvas>
-  <Story name="Simple Hierarchy">
-    <ReactHierarchy
-      width={500}
-      height={240}
-      distance={100}
-      backgroundColor="#EFE"
-      data={simpleFamilyTree}
-    />
+  <Story name="Simple Hierarchy" args={{
+    width:500,
+    height: 240,
+    distance: 100,
+    backgroundColor: "#EFE",
+    hierarchyType: "simple",
+  }}>
+    {Template.bind({})}
   </Story>
 </Canvas>
 
@@ -89,44 +71,44 @@ export const simpleFamilyTree = {
 While the example above works well for simple hierarchy, it turns out that links start to overlap and that the hierarchy becomes less readable as the number of families and members grows:
 
 <Canvas>
-  <Story name="Complex Hierarchy">
-    <ReactHierarchy
-      width={3000}
-      height={1400}
-      distance={100}
-      backgroundColor="#333333"
-      data={complexFamilyTree}
-    />
+  <Story name="Complex Hierarchy" args={{
+    width: 3000,
+    height: 1400,
+    distance: 100,
+    backgroundColor: "#333333",
+    hierarchyType: "complex",
+  }}>
+    {Template.bind({})}
   </Story>
 </Canvas>
 
 To address this issue, you can enable `circularArrangement`. It will position the different nodes on a circle to minimize the risk of overlaps. Here is what it looks like when `forcesEnabled` is set to `false`:
 
 <Canvas>
-  <Story name="Complex Hierarchy with Circular Arrangement">
-    <ReactHierarchy
-      width={3000}
-      height={1400}
-      distance={100}
-      circularArrangement={true}
-      forcesEnabled={false}
-      backgroundColor="#333333"
-      data={complexFamilyTree}
-    />
+  <Story name="Complex Hierarchy with Circular Arrangement" args={{
+    width: 3000,
+    height: 1400,
+    distance: 100,
+    circularArrangement: true,
+    forcesEnabled: false,
+    backgroundColor: "#333333",
+    hierarchyType: "complex",
+  }}>
+    {Template.bind({})}
   </Story>
 </Canvas>
 
 And when turning `forcesEnabled` on again:
 
 <Canvas>
-  <Story name="Complex Hierarchy with Circular Arrangement and Forces Enabled">
-    <ReactHierarchy
-      width={3000}
-      height={1400}
-      distance={100}
-      circularArrangement={true}
-      backgroundColor="#333333"
-      data={complexFamilyTree}
-    />
+  <Story name="Complex Hierarchy with Circular Arrangement and Forces Enabled" args={{
+    width: 3000,
+    height: 1400,
+    distance: 100,
+    circularArrangement: true,
+    backgroundColor: "#333333",
+    hierarchyType: "complex",
+  }}>
+    {Template.bind({})}
   </Story>
 </Canvas>

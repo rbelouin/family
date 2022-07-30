@@ -1,7 +1,7 @@
 import * as d3 from "d3";
-import { D3Component } from "../types";
-import { FamilyNode } from "./FamilyNode";
-import { MemberNode } from "./MemberNode";
+import { D3Component } from "../d3-component";
+import { FamilyNode, FamilyNodeProps } from "./FamilyNode";
+import { MemberNode, MemberNodeProps } from "./MemberNode";
 
 // This component is extensively inspired by the following d3 example:
 // https://observablehq.com/@d3/force-directed-tree
@@ -46,68 +46,110 @@ export type HierarchyProps = {
 type Node = d3.HierarchyNode<Data> & d3.SimulationNodeDatum;
 type Link = d3.HierarchyLink<Data> & d3.SimulationLinkDatum<Node>;
 
-export const Hierarchy: D3Component<HierarchyProps, SVGSVGElement> = (
-  props
+export const Hierarchy: D3Component<SVGSVGElement, HierarchyProps> = (
+  selection
 ) => {
-  const {
-    width,
-    height,
-    distance,
-    color = "#CC0",
-    backgroundColor = "#FFF",
-    familyNodeSize = 7,
-    memberNodeSize = 20,
-    forcesEnabled = true,
-    circularArrangement = false,
-    data,
-  } = props;
+  const defaults: Partial<HierarchyProps> = {
+    color: "#CC0",
+    backgroundColor: "#FFF",
+    familyNodeSize: 7,
+    memberNodeSize: 20,
+    forcesEnabled: true,
+    circularArrangement: false,
+  };
 
-  const root = d3.hierarchy(data) as Node;
+  const props: HierarchyProps = {
+    ...defaults,
+    ...selection.datum(),
+  };
 
-  if (circularArrangement) {
-    arrangeNodesOnACircle(root, distance);
+  const root = d3.hierarchy(props.data) as Node;
+
+  if (props.circularArrangement) {
+    arrangeNodesOnACircle(root, props.distance);
   }
 
   const links = root.links() as Link[];
   const nodes = root.descendants();
 
-  const svg = d3
-    .create("svg")
-    .datum(props)
-    .attr("viewBox", [-width / 2, -height / 2, width, height]);
+  selection.attr("viewBox", ({ width, height }) => [
+    -width / 2,
+    -height / 2,
+    width,
+    height,
+  ]);
 
-  const link = svg
-    .append("g")
-    .attr("stroke", color)
+  const link = selection
+    .selectAll("g.hierarchy-links")
+    .data([props])
+    .join("g")
+    .classed("hierarchy-links", true)
+    .attr("stroke", (props) => props.color || null)
     .selectAll("line")
     .data(links)
     .join("line");
 
-  const node = svg
-    .append("g")
-    .selectAll(".node")
+  const node = selection
+    .selectAll("g.hierarchy-nodes")
+    .data([props])
+    .join("g")
+    .classed("hierarchy-nodes", true)
+    .selectAll("g.hierarchy-node")
     .data(nodes)
     .join("g")
-    .classed("node", true)
-    .append((node) =>
-      node.data.type === "family"
-        ? FamilyNode({ ...node.data, color, size: familyNodeSize }).node()!
-        : MemberNode({
-            ...node.data,
-            color,
-            backgroundColor,
-            size: memberNodeSize,
-          }).node()!
-    );
+    .classed("hierarchy-node", true);
 
-  updateCoordinates(node, link, familyNodeSize, memberNodeSize);
-  if (forcesEnabled) {
-    applyForces(nodes, links, memberNodeSize, () =>
-      updateCoordinates(node, link, familyNodeSize, memberNodeSize)
+  const familyNode = node
+    .filter((node) => node.data.type === "family")
+    .append("circle")
+    .datum(
+      (d) =>
+        ({
+          ...d.data,
+          color: props.color!,
+          size: props.familyNodeSize!,
+        } as FamilyNodeProps)
+    ) as d3.Selection<
+    SVGCircleElement | d3.BaseType,
+    FamilyNodeProps,
+    any,
+    any
+  >;
+
+  familyNode.each(function () {
+    return FamilyNode(d3.select(this));
+  });
+
+  const memberNode = node
+    .filter((node) => node.data.type === "member")
+    .append("g")
+    .datum(
+      (d) =>
+        ({
+          ...d.data,
+          color: props.color!,
+          backgroundColor: props.backgroundColor!,
+          size: props.memberNodeSize!,
+        } as MemberNodeProps)
+    ) as d3.Selection<SVGGElement | d3.BaseType, MemberNodeProps, any, any>;
+
+  memberNode.each(function () {
+    return MemberNode(d3.select(this));
+  });
+
+  updateCoordinates(node, link, props.familyNodeSize!, props.memberNodeSize!);
+  if (props.forcesEnabled) {
+    applyForces(nodes, links, props.memberNodeSize!, () =>
+      updateCoordinates(
+        node,
+        link,
+        props.familyNodeSize!,
+        props.memberNodeSize!
+      )
     );
   }
 
-  return svg;
+  return selection;
 };
 
 function applyForces(
@@ -134,11 +176,16 @@ function applyForces(
 }
 
 function updateCoordinates(
-  node: d3.Selection<SVGGElement, Node, SVGGElement, HierarchyProps>,
+  node: d3.Selection<
+    d3.BaseType,
+    Node,
+    d3.BaseType | SVGGElement,
+    HierarchyProps
+  >,
   link: d3.Selection<
     d3.BaseType | SVGLineElement,
     Link,
-    SVGGElement,
+    d3.BaseType | SVGGElement,
     HierarchyProps
   >,
   familyNodeSize: number,
