@@ -8,7 +8,7 @@ To run this project, you will need:
 
 ```sh
 $ node --version
-v18.6.0
+v18.12.1
 
 $ yarn --version
 1.22.19
