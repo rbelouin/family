@@ -1,4 +1,5 @@
 import { D3Component } from "../d3-component";
+import { DateWithPrecision, formatRange } from "../date-with-precision";
 import { createOrUpdateCircleClipPath } from "./CircleClipPath";
 
 export type MemberNodeProps = {
@@ -8,6 +9,8 @@ export type MemberNodeProps = {
   size: number;
   name: string;
   picture?: string;
+  birth?: DateWithPrecision;
+  death?: DateWithPrecision;
 };
 
 export const MemberNode: D3Component<SVGGElement, MemberNodeProps> = (
@@ -55,7 +58,12 @@ export const MemberNode: D3Component<SVGGElement, MemberNodeProps> = (
     .selectAll("title")
     .data([props])
     .join("title")
-    .text((props) => props.name);
+    .text(buildMemberNodeTitle);
 
   return selection;
 };
+
+export function buildMemberNodeTitle(props: MemberNodeProps): string {
+  const dateRange = formatRange(props.birth, props.death, navigator.language);
+  return dateRange ? `${props.name}\n${dateRange}` : props.name;
+}
