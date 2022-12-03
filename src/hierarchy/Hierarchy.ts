@@ -6,6 +6,7 @@ import { MemberNode, MemberNodeProps } from "./MemberNode";
 // This component is extensively inspired by the following d3 example:
 // https://observablehq.com/@d3/force-directed-tree
 
+export type Role = "partner" | "child" | "other";
 export type Data =
   | {
       type: "family";
@@ -15,6 +16,7 @@ export type Data =
   | {
       type: "member";
       name: string;
+      role: Role;
       picture?: string;
       value?: number;
       children?: Data[];
@@ -87,7 +89,20 @@ export const Hierarchy: D3Component<SVGSVGElement, HierarchyProps> = (
     .attr("stroke", (props) => props.color || null)
     .selectAll("line")
     .data(links)
-    .join("line");
+    .join("line")
+    .attr("stroke-width", ({ source, target }) => {
+      if (target.data.type === "member" && target.data.role === "partner") {
+        return "2px";
+      } else if (
+        target.data.type === "family" &&
+        source.data.type === "member" &&
+        source.data.role !== "partner"
+      ) {
+        return "2px";
+      } else {
+        return "1px";
+      }
+    });
 
   const node = selection
     .selectAll("g.hierarchy-nodes")
