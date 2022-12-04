@@ -4,22 +4,22 @@ describe("date-with-precision", () => {
   describe("format", () => {
     [
       {
-        givenDate: [2022, 11, 3] as DateWithPrecision,
+        givenDate: [2022, 12, 3] as DateWithPrecision,
         givenLanguage: "en-US",
         expectedResult: "12/3/2022",
       },
       {
-        givenDate: [2022, 11, 3] as DateWithPrecision,
+        givenDate: [2022, 12, 3] as DateWithPrecision,
         givenLanguage: "fr-FR",
         expectedResult: "03/12/2022",
       },
       {
-        givenDate: [2022, 11] as DateWithPrecision,
+        givenDate: [2022, 12] as DateWithPrecision,
         givenLanguage: "en-US",
         expectedResult: "12/2022",
       },
       {
-        givenDate: [2022, 11] as DateWithPrecision,
+        givenDate: [2022, 12] as DateWithPrecision,
         givenLanguage: "fr-FR",
         expectedResult: "12/2022",
       },
@@ -45,38 +45,38 @@ describe("date-with-precision", () => {
   describe("formatRange", () => {
     [
       {
-        givenStart: [1992, 11, 3] as DateWithPrecision,
-        givenEnd: [2022, 11, 3] as DateWithPrecision,
+        givenStart: [1992, 12, 3] as DateWithPrecision,
+        givenEnd: [2022, 12, 3] as DateWithPrecision,
         givenLocale: "en-US",
         expectedResult: "12/3/1992 - 12/3/2022",
       },
       {
-        givenStart: [1992, 11, 3] as DateWithPrecision,
-        givenEnd: [2022, 11, 3] as DateWithPrecision,
+        givenStart: [1992, 12, 3] as DateWithPrecision,
+        givenEnd: [2022, 12, 3] as DateWithPrecision,
         givenLocale: "fr-FR",
         expectedResult: "03/12/1992 - 03/12/2022",
       },
       {
-        givenStart: [1992, 11, 3] as DateWithPrecision,
+        givenStart: [1992, 12, 3] as DateWithPrecision,
         givenEnd: undefined,
         givenLocale: "en-US",
         expectedResult: "12/3/1992",
       },
       {
-        givenStart: [1992, 11, 3] as DateWithPrecision,
+        givenStart: [1992, 12, 3] as DateWithPrecision,
         givenEnd: undefined,
         givenLocale: "fr-FR",
         expectedResult: "03/12/1992",
       },
       {
         givenStart: undefined,
-        givenEnd: [2022, 11, 3] as DateWithPrecision,
+        givenEnd: [2022, 12, 3] as DateWithPrecision,
         givenLocale: "en-US",
         expectedResult: undefined,
       },
       {
         givenStart: undefined,
-        givenEnd: [2022, 11, 3] as DateWithPrecision,
+        givenEnd: [2022, 12, 3] as DateWithPrecision,
         givenLocale: "fr-FR",
         expectedResult: undefined,
       },

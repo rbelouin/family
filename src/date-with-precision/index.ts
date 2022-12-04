@@ -10,7 +10,9 @@ export function format(date: DateWithPrecision, locale: string): string {
     day: date.length > 2 ? "numeric" : undefined,
   });
 
-  return formatter.format(new Date(date[0], date[1] || 0, date[2] || 1));
+  return formatter.format(
+    new Date(date[0], date[1] ? date[1] - 1 : 0, date[2] || 1)
+  );
 }
 
 export function formatRange(
